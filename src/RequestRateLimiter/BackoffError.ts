@@ -1,2 +1,1 @@
-
-export class BackoffError extends Error { }
+export class BackoffError extends Error {}

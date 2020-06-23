@@ -1,28 +1,24 @@
 import { RequestRateLimiter, RequestHandler, BackoffError } from "./index";
 
-
-describe('Rate Limiter', () => {
-
+describe("Rate Limiter", () => {
   const limiter = new RequestRateLimiter();
 
-  test('return request response', async () => {
+  test("return request response", async () => {
     const response = await limiter.request(new MockRequestHandler("ok"));
     expect(response).toEqual({ status: "ok" });
   });
 
-
-  test('enqueue one request, fail', async () => {
-    expect.assertions(2)
+  test("enqueue one request, fail", async () => {
+    expect.assertions(2);
     await limiter.request(new MockRequestHandler("fail")).catch((err: Error) => {
       expect(err).not.toBeUndefined();
       expect(err.message).toEqual("fail");
     });
   });
 
-
-  test('enqueue one request, back off', async () => {
+  test("enqueue one request, back off", async () => {
     const limiter = new RequestRateLimiter({
-      backoffTime: .5,
+      backoffTime: 0.5,
     });
 
     const start = Date.now();
@@ -33,24 +29,20 @@ describe('Rate Limiter', () => {
     expect(Date.now() - start).toBeGreaterThan(1500);
   });
 
-
-  test('idle promise', async () => {
+  test("idle promise", async () => {
     const limiter = new RequestRateLimiter();
     let idleCalled = false;
 
     await limiter.request(new MockRequestHandler("ok"));
-    limiter.idle().then(() => idleCalled = true);
+    limiter.idle().then(() => (idleCalled = true));
 
     await limiter.request(new MockRequestHandler("ok"));
-    expect(idleCalled).toBeTruthy()
+    expect(idleCalled).toBeTruthy();
   });
 });
 
-
-
 type MockRequestActions = "fail" | "backoff" | "ok";
 class MockRequestHandler implements RequestHandler<{ status: string }> {
-
   private action: MockRequestActions;
   private counter = 0;
   constructor(action: MockRequestActions) {
@@ -58,15 +50,15 @@ class MockRequestHandler implements RequestHandler<{ status: string }> {
   }
 
   async execute() {
-    if (this.action === 'fail') {
+    if (this.action === "fail") {
       throw new Error(this.action);
-    } else if (this.action === 'backoff' && !this.counter) {
+    } else if (this.action === "backoff" && !this.counter) {
       this.counter = 1;
       throw new BackoffError(this.action);
     } else {
       return {
         status: this.action,
-      }
+      };
     }
   }
 }
